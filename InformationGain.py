@@ -24,6 +24,16 @@ def getTotalLengthOfData(data):
     return totalCount
 
 
+def entropy_for_greater_than(countOfClassificationInRange, classificationRange):
+    value = countOfClassificationInRange * 1.0 / classificationRange
+    otherValue = (classificationRange - countOfClassificationInRange) * 1.0 / classificationRange
+    return -(value * log(value, 2) if value > 0 else 0)  - (otherValue * log(otherValue, 2) if otherValue > 0 else 0)
+
+def entropy_for_less_than(countOfClassificationInRange, classificationRange):
+    value = countOfClassificationInRange * 1.0 / classificationRange
+    otherValue = (classificationRange - countOfClassificationInRange) * 1.0 / classificationRange
+    return -(value * log(value, 2) if value > 0 else 0)  - (otherValue * log(otherValue, 2) if otherValue > 0 else 0)
+
 def entropyIn(data):
     subSequences = classification(data)
     results = dict()
@@ -33,17 +43,12 @@ def entropyIn(data):
         lessThanCount = 0
         for classifier in subSequenceRange:
              lessThanCount += subSequenceRange[classifier]
-        greaterThanCount = totalCount - lessThanCount
-        lessThanTotal = greaterThanTotal = 0
+        results[subSequence] = dict()
         for classifier in subSequenceRange:
-            range_classifier = subSequenceRange[classifier]
-            value = range_classifier* 1.0 / lessThanCount
-            if value > 0:
-                lessThanTotal -= value*log(value, 2)
-            value = (greaterThanCount - range_classifier) / (greaterThanCount * 1.0)
-            if value > 0:
-                greaterThanTotal -= value *log(value, 2)
-        results[subSequence] = {'<':lessThanTotal*lessThanCount/totalCount, '>':greaterThanTotal*greaterThanCount/totalCount}
+            countOfClassificationInRange = subSequenceRange[classifier]
+            classificationSize = data[classifier].__len__();
+            results[subSequence][classifier+'<'] = entropy_for_less_than(countOfClassificationInRange, lessThanCount)
+            results[subSequence][classifier+'>'] = entropy_for_greater_than(classificationSize - countOfClassificationInRange, totalCount - lessThanCount)
     return results
 
 
