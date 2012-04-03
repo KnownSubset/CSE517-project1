@@ -2,6 +2,51 @@ __author__ = 'nathan'
 from sets import Set
 from math import log
 
+def calculate_info_gain(columnMap):
+    gains = []
+    for attribute in columnMap:
+        entropy = informationGain(columnMap[attribute])
+        elements = sorted(entropy.values(), reverse=True)[0]
+        for key in entropy.keys():
+            if entropy[key] != elements:
+                entropy.__delitem__(key)
+            else:
+                gains.append((attribute, key, elements))
+    gains = sorted(gains, key=lambda gene: gene[2], reverse=True)
+    for gain in gains:
+        print gain
+
+
+def calculate(file):
+    f = open('/Users/nathan/Development/CSE517/project1/data.txt', 'r+')
+    columnMap = dict()
+#    for column in f.readline().split("\t"):
+#        if not column in columnMap.keys():
+#            columnMap[column] = []
+#        columnMap[column].append()
+#        count += 1
+#    count = 0
+    names = []
+    first = True
+    for line in f.readline().split("\r"):
+        if first:
+            first = False
+            continue
+        count = 0
+        name = ""
+        for cell in line.split("\t"):
+            if count > 0:
+                key = "A" if count < 161 else "C"
+                value = float(cell) if cell != "NaN" else 0.0
+                columnMap[name][key].append(value)
+            else:
+                name = cell
+                columnMap[cell] = {"A":[], "C":[]}
+                names.append(cell)
+            count += 1
+
+    calculate_info_gain(columnMap)
+
 def informationGain(dataPoints):
     totalCount = getTotalLengthOfData(dataPoints)
     entropy = 0
@@ -13,7 +58,7 @@ def informationGain(dataPoints):
     for classifier in entropyByClassifiers:
         infoGain[classifier] = entropy
     for classifier in entropyByClassifiers:
-        for entropyOfClassifier in entropyByClassifiers[classifier].values():
+        for entropyOfClassifier in entropyByClassifiers[classifier].values()[0]:
             infoGain[classifier] = infoGain[classifier] - entropyOfClassifier
     return infoGain
 
@@ -43,12 +88,15 @@ def entropyIn(data):
         lessThanCount = 0
         for classifier in subSequenceRange:
              lessThanCount += subSequenceRange[classifier]
+        greaterThanCount = totalCount - lessThanCount
         results[subSequence] = dict()
         for classifier in subSequenceRange:
             countOfClassificationInRange = subSequenceRange[classifier]
-            classificationSize = data[classifier].__len__();
-            results[subSequence][classifier+'<'] = entropy_for_less_than(countOfClassificationInRange, lessThanCount)
-            results[subSequence][classifier+'>'] = entropy_for_greater_than(classificationSize - countOfClassificationInRange, totalCount - lessThanCount)
+            results[subSequence][classifier] = [(float(lessThanCount)/totalCount)*entropy_for_less_than(countOfClassificationInRange, lessThanCount)]
+        for classifier in subSequenceRange:
+            countOfClassificationInRange = subSequenceRange[classifier]
+            classificationSize = data[classifier].__len__()
+            results[subSequence][classifier].append((greaterThanCount*1.0/totalCount)*entropy_for_greater_than(classificationSize - countOfClassificationInRange, greaterThanCount))
     return results
 
 
