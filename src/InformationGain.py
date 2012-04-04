@@ -34,17 +34,36 @@ def calculate(file):
             continue
         count = 0
         name = ""
+        sumA = sumC = 0.0
+        nans = []
         for cell in line.split("\t"):
             if count > 0:
                 key = "A" if count < 161 else "C"
-                value = float(cell) if cell != "NaN" else 0.0
+                if cell == "NaN":
+                    nans.append(count)
+                    value = count
+                else:
+                    value = float(cell)
+                    if count < 161:
+                        key = "A"
+                        sumA += value
+                    else:
+                        key = "C"
+                        sumC += value
                 columnMap[name][key].append(value)
             else:
                 name = cell
                 columnMap[cell] = {"A":[], "C":[]}
                 names.append(cell)
             count += 1
-
+        def lt_filter(x): return x < 161
+        def gt_filter(x): return x > 160
+        lessThanFilter = filter(lt_filter, nans)
+        greaterThanFilter = filter(gt_filter, nans)
+        for nan in lessThanFilter:
+            columnMap[name]['A'][nan-1] = sumA/ (160 - lessThanFilter.__len__())
+        for nan in greaterThanFilter:
+            columnMap[name]['C'][nan-161] = sumC/ (170 - greaterThanFilter.__len__())
     calculate_info_gain(columnMap)
 
 def informationGain(dataPoints):
