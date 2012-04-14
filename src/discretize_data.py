@@ -27,7 +27,7 @@ def discretize_row(discreteFilters, row, rowHeader):
         if not cell == 'NaN':
             cells.append(float(cell))
     mean = sum(cells) / len(cells)
-    #mean = 0
+    mean = 0
     for cell in range(0,len(row)):
         if row[cell] == 'NaN':
             row[cell] = mean
@@ -37,20 +37,30 @@ def discretize_row(discreteFilters, row, rowHeader):
         row[cell] = str(row[cell] < filterValue)
     return row
 
-
-def discrete(fileName, discreteFileName):
-    rows = read_in(discreteFileName)
-    discreteFilters = dict()
-    for row in rows:
-        row[1] = float(row[1].replace('\'',''))
-        row[0] = row[0].replace('\'','')
-        row[0] = row[0].replace('(','')
-        discreteFilters[row[0]] = row[1]
-    data = read_in2(fileName)
-    csv_file = open('/tmp/workfile', 'w')
-    csv_file.write(",".join(data[0]) + "\n")
+def discretize_rows(discreteFilters, data):
     for row in data[1:len(data)]:
         row[1:161] = discretize_row(discreteFilters, row[1:161], row[0])
         row[161:len(row)] = discretize_row(discreteFilters, row[161:len(row)], row[0])
+    return data
+
+def read_in_discrete_filters(discreteFileName):
+    rows = read_in(discreteFileName)
+    discreteFilters = dict()
+    for row in rows:
+        row[1] = float(row[1].replace('\'', ''))
+        row[0] = row[0].replace('\'', '')
+        row[0] = row[0].replace('(', '')
+        discreteFilters[row[0]] = row[1]
+    return discreteFilters
+
+
+def discretize_data(data, discreteFileName):
+    discreteFilters = read_in_discrete_filters(discreteFileName)
+    return discretize_rows(discreteFilters, data)
+
+def discrete(fileName, discreteFileName):
+    data = read_in2(fileName)
+    data = discretize_data(discreteFileName, fileName)
+    csv_file = open('/tmp/workfile', 'w')
+    for row in data:
         csv_file.write(",".join(row) + "\n")
-    return rows
